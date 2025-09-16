@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TFXG Robots Store</title>
+  <style>
+    :root {
+      --bg: #0b0b0f;
+      --card: #1c1c24;
+      --primary: #00ff99;
+      --accent: #2196f3;
+      --text: #e0e0e0;
+    }
+    body {
+      margin: 0; font-family: "Segoe UI", sans-serif;
+      background: var(--bg); color: var(--text);
+      text-align: center;
+    }
+    header {
+      padding: 2rem;
+      background: linear-gradient(90deg, #00ff99, #2196f3);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 2.2rem; font-weight: 700;
+    }
+    .grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem; padding: 2rem;
+    }
+    .card {
+      background: var(--card); border-radius: 14px; padding: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,.4); transition: transform .2s;
+    }
+    .card:hover { transform: translateY(-6px); }
+    .card h3 { margin: .5rem 0; }
+    button {
+      background: var(--accent); border: none; border-radius: 8px;
+      padding: .7rem 1.4rem; cursor: pointer; color: white; font-weight: 600;
+      transition: background .2s;
+    }
+    button:hover { background: #1976d2; }
+
+    /* Modal */
+    #modal {
+      display:none; position:fixed; inset:0; background:rgba(0,0,0,.8);
+      align-items:center; justify-content:center; z-index:999;
+    }
+    .modal-box {
+      background:#1e1e28; padding:2rem; border-radius:12px; width:320px;
+      text-align:center; box-shadow:0 6px 20px rgba(0,0,0,.6);
+    }
+    input {
+      width:100%; padding:.7rem; margin:1rem 0;
+      border-radius:6px; border:none;
+    }
+    .loader {
+      border:5px solid #444; border-top:5px solid var(--primary);
+      border-radius:50%; width:40px; height:40px;
+      margin:10px auto; animation:spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg);} }
+  </style>
+</head>
+<body>
+  <header>TFXG Trading Robots</header>
+  <div class="grid" id="productGrid"></div>
+
+  <!-- Modal -->
+  <div id="modal">
+    <div class="modal-box">
+      <h3 id="modalTitle"></h3>
+      <p>Amount: <span id="modalAmount"></span> KES</p>
+      <input type="tel" id="phone" placeholder="Enter Safaricom Number">
+      <button onclick="payNow()">Confirm Payment</button>
+      <div id="loader" style="display:none;">
+        <div class="loader"></div>
+        <p>Kindly enter your PIN on phone...</p>
+      </div>
+    </div>
+  </div>
+
+<script>
+const robots = [
+  { name:"NeuroTrade 2025", price:0.01, link:"https://payhip.com/b/ngxSk" },
+  { name:"QuantumBot X", price:0.012, link:"https://payhip.com/b/0IR4H" },
+  { name:"AlphaPulse EA", price:5, link:"https://payhip.com/b/L1eIq" },
+  { name:"VortexTrader", price:6, link:"https://payhip.com/b/Mwmlk" },
+  { name:"Zenith AI Trader", price:6, link:"https://payhip.com/b/qhZeI" }
+  // add all the others here
+];
+const USD_TO_KES = 130;
+let selected = null;
+
+function renderProducts(){
+  document.getElementById("productGrid").innerHTML = robots.map((r,i)=>`
+    <div class="card">
+      <h3>${r.name}</h3>
+      <p>USD ${r.price}</p>
+      <button onclick="openModal(${i})">Buy Now</button>
+    </div>`).join("");
+}
+renderProducts();
+
+function openModal(i){
+  selected = robots[i];
+  document.getElementById("modalTitle").innerText = selected.name;
+  document.getElementById("modalAmount").innerText = selected.price * USD_TO_KES;
+  document.getElementById("modal").style.display = "flex";
+}
+
+async function payNow(){
+  const phone = document.getElementById("phone").value;
+  const amount = selected.price * USD_TO_KES;
+  document.getElementById("loader").style.display="block";
+
+  const res = await fetch("/.netlify/functions/stkpush", {
+    method:"POST", headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ phone, amount, product:selected.name, link:selected.link })
+  });
+  const data = await res.json();
+  console.log("STK Response:", data);
+}
+</script>
+</body>
+</html>
